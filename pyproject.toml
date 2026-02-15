@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nql-analyzer"
+version = "0.1.0"
+description = "Nexthink NQL API query and analysis toolkit"
+requires-python = ">=3.10"
+dependencies = [
+    "requests>=2.31",
+    "pandas>=2.0",
+    "python-dotenv>=1.0",
+    "rich>=13.0",
+    "pyarrow>=14.0",
+    "anthropic>=0.39",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0"]
+
+[tool.setuptools.packages.find]
+where = ["src"]

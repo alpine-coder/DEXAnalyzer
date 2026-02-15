@@ -1,0 +1,30 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "nql query",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "nql_analyzer.cli",
+      "args": ["query", "devices | list name, os_version | limit 10"],
+      "console": "integratedTerminal",
+      "envFile": "${workspaceFolder}/.env"
+    },
+    {
+      "name": "nql analyze",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "nql_analyzer.cli",
+      "args": ["analyze", "${file}"],
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "pytest",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pytest",
+      "args": ["tests/", "-v"],
+      "console": "integratedTerminal"
+    }
+  ]
+}
