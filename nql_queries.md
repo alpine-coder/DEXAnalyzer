@@ -27,14 +27,20 @@ collaboration.sessions during past 168h
 
 ### `#call_analysis_executions`
 
-Returns 15-minute execution samples with CPU usage for Teams and Zoom binaries from the past 7 days.
+Returns 15-minute execution samples with CPU usage for a given binary from the past 7 days. This query is **parametric** — it uses `$binary_name` as a parameter and is called once per binary (`msteams`, `ms-teams.exe`, `zoom.us`, `zoom.exe`) to avoid the 2M row export limit.
 
 ```nql
 execution.events during past 168h
-| where binary.name in ["zoom.exe", "zoom.us", "msteams", "ms-teams.exe"]
+| where binary.name == $binary_name
 | list execution.event.start_time, execution.event.end_time, execution.event.bucket_duration, execution.event.cpu_time, execution.event.real_memory, binary.name, binary.platform, device.name
 | sort execution.event.start_time desc
 ```
+
+**Parameter:**
+
+| Name | Type | Values |
+|------|------|--------|
+| `$binary_name` | string | `msteams`, `ms-teams.exe`, `zoom.us`, `zoom.exe` |
 
 **Columns:**
 
@@ -45,7 +51,7 @@ execution.events during past 168h
 | `execution.event.bucket_duration` | int | Always `900` (seconds) |
 | `execution.event.cpu_time` | float | CPU time consumed in this bucket (seconds) |
 | `execution.event.real_memory` | float | Memory usage (bytes) |
-| `binary.name` | string | `msteams`, `ms-teams.exe`, `zoom.us`, or `zoom.exe` |
+| `binary.name` | string | Binary name (matches `$binary_name`) |
 | `binary.platform` | string | `macOS` or `Windows` |
 | `device.name` | string | Device identifier |
 
@@ -54,3 +60,4 @@ execution.events during past 168h
 - Queries are executed via the **v1/export** API (unlimited rows, async)
 - Results are cached locally as Parquet files in `.cache/` with a 1-hour TTL
 - Both queries use a 168h (7 day) lookback window
+- `#call_analysis_executions` is called 4 times (once per binary) and results are concatenated; each call is cached separately

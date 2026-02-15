@@ -27,13 +27,28 @@ APP_TO_BINARIES: dict[str, list[str]] = {
     "Zoom": ["zoom.us", "zoom.exe"],
 }
 
+ALL_BINARIES = [b for binaries in APP_TO_BINARIES.values() for b in binaries]
+
 SAMPLE_DURATION = 900  # 15 minutes in seconds
 
 
 def _load_data(cache: QueryCache) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Fetch and prepare calls and executions DataFrames."""
+    """Fetch and prepare calls and executions DataFrames.
+
+    Executions are fetched per binary (parametric query) to avoid the
+    row export limit, then concatenated.
+    """
     df_calls = cache.execute("#call_analysis_calls")
-    df_exec = cache.execute("#call_analysis_executions")
+
+    # Fetch executions per binary and concatenate
+    exec_frames = []
+    for binary in ALL_BINARIES:
+        df = cache.execute(
+            "#call_analysis_executions",
+            parameters={"binary_name": binary},
+        )
+        exec_frames.append(df)
+    df_exec = pd.concat(exec_frames, ignore_index=True)
 
     # Parse timestamps
     df_calls["start"] = pd.to_datetime(df_calls["collaboration.session.call.start_time"])
