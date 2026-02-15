@@ -63,7 +63,12 @@ src/nql_analyzer/
 
 ## NQL Queries
 
-Queries are pre-saved in the Nexthink web interface and referenced by ID (e.g. `#call_analysis_calls`). The export API is used by default for unlimited results.
+The analysis tools rely on pre-saved NQL queries that you must create in your Nexthink instance before running any tool:
+
+1. Log in to your Nexthink web console
+2. Navigate to **Administration > NQL API queries**
+3. Create each query listed in [`nql_queries.md`](nql_queries.md) using the exact `queryId` and NQL syntax provided
+4. Ensure the API credentials in your `.env` have permission to execute these queries
 
 ## License
 
