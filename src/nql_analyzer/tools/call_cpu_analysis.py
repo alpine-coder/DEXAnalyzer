@@ -100,6 +100,14 @@ def run(cache: QueryCache | None = None) -> pd.DataFrame:
     df_calls["call_duration_s"] = (df_calls["end"] - df_calls["start"]).dt.total_seconds()
     df_calls["call_id"] = np.arange(len(df_calls))
 
+    # Aggregate executions: sum CPU time per (device, binary, sample_start)
+    # This handles multiple processes per binary in the same time window
+    df_exec = (
+        df_exec.groupby(["device", "binary", "platform", "sample_start", "sample_end"])
+        .agg(cpu_time=("cpu_time", "sum"))
+        .reset_index()
+    )
+
     # Expand calls: one row per (call, binary) so we can merge with executions
     df_calls_exp = _build_binary_col(df_calls)
 
@@ -285,25 +293,29 @@ def _ai_summary(s: pd.DataFrame, dist_lines: list[str]) -> str | None:
     except ImportError:
         return None
 
-    data_text = _format_results_for_llm(s, dist_lines)
-    client = anthropic.Anthropic(api_key=api_key)
-    message = client.messages.create(
-        model="claude-haiku-4-5-20251001",
-        max_tokens=300,
-        messages=[{
-            "role": "user",
-            "content": (
-                "You are a Digital Employee Experience (DEX) analyst. "
-                "Based on the following CPU efficiency analysis of video "
-                "conferencing applications, write a concise summary (3-4 "
-                "sentences) highlighting the key findings. "
-                "The number of calls is only relevant for understanding "
-                "the statistical relevance of the data.\n\n"
-                f"{data_text}"
-            ),
-        }],
-    )
-    return message.content[0].text
+    try:
+        data_text = _format_results_for_llm(s, dist_lines)
+        client = anthropic.Anthropic(api_key=api_key)
+        message = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=300,
+            messages=[{
+                "role": "user",
+                "content": (
+                    "You are a Digital Employee Experience (DEX) analyst. "
+                    "Based on the following CPU efficiency analysis of video "
+                    "conferencing applications, write a concise summary (3-4 "
+                    "sentences) highlighting the key findings. "
+                    "The number of calls is only relevant for understanding "
+                    "the statistical relevance of the data.\n\n"
+                    f"{data_text}"
+                ),
+            }],
+        )
+        return message.content[0].text
+    except Exception as e:
+        logging.warning(f"Could not generate AI summary: {e}")
+        return None
 
 
 if __name__ == "__main__":
